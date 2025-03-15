@@ -146,23 +146,55 @@ function encodeValues_INT96(values: number[]) {
   return buf;
 }
 
-function decodeValues_INT96(cursor: Cursor, count: number) {
+function decodeValues_INT96(cursor: Cursor, count: number, opts?: Options) {
   const values = [];
+  // Default to false for backward compatibility
+  const treatAsTimestamp = opts?.treatInt96AsTimestamp === true;
 
   for (let i = 0; i < count; ++i) {
-    const low = INT53.readInt64LE(cursor.buffer, cursor.offset);
-    const high = cursor.buffer.readUInt32LE(cursor.offset + 8);
-
-    if (high === 0xffffffff) {
-      values.push(~-low + 1); // truncate to 64 actual precision
+    const nanosSinceMidnight = INT53.readInt64LE(cursor.buffer, cursor.offset);
+    const julianDay = cursor.buffer.readUInt32LE(cursor.offset + 8);
+    
+    if (treatAsTimestamp) {
+      // Convert Julian day and nanoseconds to a timestamp
+      values.push(convertInt96ToTimestamp(julianDay, nanosSinceMidnight));
     } else {
-      values.push(low); // truncate to 64 actual precision
+      // For non-timestamp INT96 values, maintain existing behavior
+      if (julianDay === 0xffffffff) {
+        values.push(~-nanosSinceMidnight + 1); // negative value
+      } else {
+        values.push(nanosSinceMidnight); // positive value
+      }
     }
-
+    
     cursor.offset += 12;
   }
 
   return values;
+}
+
+/**
+ * Convert INT96 to timestamp
+ * In the Parquet format, INT96 timestamps are stored as:
+ * - The first 8 bytes (low) represent nanoseconds within the day
+ * - The last 4 bytes (high) represent the Julian day
+ * 
+ * @param julianDay Julian day number
+ * @param nanosSinceMidnight Nanoseconds since midnight
+ * @returns JavaScript Date object (UTC)
+ */
+function convertInt96ToTimestamp(julianDay: number, nanosSinceMidnight: number | bigint): Date {
+  // Julian day 2440588 corresponds to 1970-01-01 (Unix epoch)
+  const daysSinceEpoch = julianDay - 2440588;
+  
+  // Convert days to milliseconds (86,400,000 ms per day)
+  const millisSinceEpoch = daysSinceEpoch * 86400000;
+  
+  // Convert nanoseconds to milliseconds
+  const nanosInMillis = Number(BigInt(nanosSinceMidnight) / 1000000n);
+  
+  // Create a UTC Date
+  return new Date(millisSinceEpoch + nanosInMillis);
 }
 
 function encodeValues_FLOAT(values: number[]) {
@@ -322,7 +354,7 @@ export const decodeValues = function (type: ValidValueTypes | string, cursor: Cu
       return decodeValues_INT64(cursor, count, opts);
 
     case 'INT96':
-      return decodeValues_INT96(cursor, count);
+      return decodeValues_INT96(cursor, count, opts);
 
     case 'FLOAT':
       return decodeValues_FLOAT(cursor, count);
