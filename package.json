@@ -1,10 +1,10 @@
 {
-  "name": "@dsnp/parquetjs",
+  "name": "@j4ys0n/parquetjs",
   "description": "fully asynchronous, pure JavaScript implementation of the Parquet file format",
   "main": "dist/parquet.js",
   "types": "dist/parquet.d.ts",
   "version": "0.0.0",
-  "homepage": "https://github.com/LibertyDSNP/parquetjs",
+  "homepage": "https://github.com/j4ys0n/parquetjs",
   "license": "MIT",
   "keywords": [
     "dremel",
@@ -12,7 +12,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/LibertyDSNP/parquetjs.git"
+    "url": "git://github.com/j4ys0n/parquetjs.git"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.750.0",
