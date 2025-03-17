@@ -154,7 +154,7 @@ function decodeValues_INT96(cursor: Cursor, count: number, opts?: Options) {
   for (let i = 0; i < count; ++i) {
     const nanosSinceMidnight = INT53.readInt64LE(cursor.buffer, cursor.offset);
     const julianDay = cursor.buffer.readUInt32LE(cursor.offset + 8);
-    
+
     if (treatAsTimestamp) {
       // Convert Julian day and nanoseconds to a timestamp
       values.push(convertInt96ToTimestamp(julianDay, nanosSinceMidnight));
@@ -166,7 +166,7 @@ function decodeValues_INT96(cursor: Cursor, count: number, opts?: Options) {
         values.push(nanosSinceMidnight); // positive value
       }
     }
-    
+
     cursor.offset += 12;
   }
 
@@ -178,7 +178,7 @@ function decodeValues_INT96(cursor: Cursor, count: number, opts?: Options) {
  * In the Parquet format, INT96 timestamps are stored as:
  * - The first 8 bytes (low) represent nanoseconds within the day
  * - The last 4 bytes (high) represent the Julian day
- * 
+ *
  * @param julianDay Julian day number
  * @param nanosSinceMidnight Nanoseconds since midnight
  * @returns JavaScript Date object (UTC)
@@ -186,13 +186,13 @@ function decodeValues_INT96(cursor: Cursor, count: number, opts?: Options) {
 function convertInt96ToTimestamp(julianDay: number, nanosSinceMidnight: number | bigint): Date {
   // Julian day 2440588 corresponds to 1970-01-01 (Unix epoch)
   const daysSinceEpoch = julianDay - 2440588;
-  
+
   // Convert days to milliseconds (86,400,000 ms per day)
   const millisSinceEpoch = daysSinceEpoch * 86400000;
-  
+
   // Convert nanoseconds to milliseconds
   const nanosInMillis = Number(BigInt(nanosSinceMidnight) / 1000000n);
-  
+
   // Create a UTC Date
   return new Date(millisSinceEpoch + nanosInMillis);
 }

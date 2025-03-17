@@ -199,7 +199,7 @@ export class ParquetReader {
     if (!PARQUET_VERSIONS.includes(metadata.version)) {
       throw 'invalid parquet version';
     }
-    
+
     // Default to false for backward compatibility
     this.treatInt96AsTimestamp = opts.treatInt96AsTimestamp === true;
 
@@ -761,7 +761,7 @@ export class ParquetEnvelopeReader {
       compression: compression,
       column: field,
       num_values: metadata.num_values,
-      treatInt96AsTimestamp: this.treatInt96AsTimestamp
+      treatInt96AsTimestamp: this.treatInt96AsTimestamp,
     });
 
     // If this exists and is greater than zero then we need to have an offset
