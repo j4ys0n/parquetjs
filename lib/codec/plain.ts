@@ -152,18 +152,20 @@ function decodeValues_INT96(cursor: Cursor, count: number, opts?: Options) {
   const treatAsTimestamp = opts?.treatInt96AsTimestamp === true;
 
   for (let i = 0; i < count; ++i) {
-    const nanosSinceMidnight = INT53.readInt64LE(cursor.buffer, cursor.offset);
-    const julianDay = cursor.buffer.readUInt32LE(cursor.offset + 8);
+    // when treatAsTimestamp is true, low is nanoseconds since midnight
+    const low = INT53.readInt64LE(cursor.buffer, cursor.offset);
+    // when treatAsTimestamp is true, high is Julian day
+    const high = cursor.buffer.readUInt32LE(cursor.offset + 8);
 
     if (treatAsTimestamp) {
       // Convert Julian day and nanoseconds to a timestamp
-      values.push(convertInt96ToTimestamp(julianDay, nanosSinceMidnight));
+      values.push(convertInt96ToTimestamp(high, low));
     } else {
       // For non-timestamp INT96 values, maintain existing behavior
-      if (julianDay === 0xffffffff) {
-        values.push(~-nanosSinceMidnight + 1); // negative value
+      if (high === 0xffffffff) {
+        values.push(~-low + 1); // negative value
       } else {
-        values.push(nanosSinceMidnight); // positive value
+        values.push(low); // positive value
       }
     }
 
